@@ -1,5 +1,7 @@
 # flatcrawl
 
+[![CircleCI](https://circleci.com/gh/madis/flatcrawl.svg?style=svg)](https://circleci.com/gh/madis/flatcrawl)
+
 Clojure app for crawling apartment information from http://kv.ee
 
 > Using this project to learn more about Clojure with the possibility that it

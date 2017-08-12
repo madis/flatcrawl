@@ -55,11 +55,29 @@
   (let [query-params (query-params)]
     (request-url (make-query-url {}))))
 
-(defn sanitize-titles [titles]
-  (map string/trim (map html/text titles)))
+(defn sanitize [string]
+  (string/trim string))
 
-(def title-selectors [:tr.object-type-apartment :td.object-name :h2.object-title])
+(defn extract-from-page
+  "Returns uses selector to find matches from page"
+  [page selector]
+  ((comp #(map sanitize %) #(map html/text %) html/select) page selector))
 
-(defn get-titles [page]
- (sanitize-titles (html/select page title-selectors)))
+(defn map-columns-to-record-rows [m]
+  (->> m
+       vals
+       (apply map vector)
+       (map #(zipmap (keys m) %))))
+
+(defn page->records [page selectors]
+  "Extracts rows of records from page (html dom map) based on selectors map"
+  (let [extract (partial extract-from-page page)
+        named-select (fn [result [key selector]]
+                       (assoc result key (extract selector)))
+        selector-data (reduce named-select {} selectors)]
+    (map-columns-to-record-rows selector-data)))
+
+(def listing-selectors
+  {:title [:tr.object-type-apartment :td.object-name :h2.object-title]
+   :description [:tr.object-type-apartment :td.object-name :p.object-excerpt]})
 

@@ -58,26 +58,44 @@
 (defn sanitize [string]
   (string/trim string))
 
-(defn extract-from-page
-  "Returns uses selector to find matches from page"
-  [page selector]
-  ((comp #(map sanitize %) #(map html/text %) html/select) page selector))
+(defn extract-from-snippet
+  "Returns matches for selectors on a page running them through processor function"
+  [snippet selector processor]
+  (processor (html/select snippet selector)))
 
-(defn map-columns-to-record-rows [m]
-  (->> m
+(defn columns-to-record-rows [selector-rows-map]
+  (->> selector-rows-map
        vals
        (apply map vector)
-       (map #(zipmap (keys m) %))))
+       (map #(zipmap (keys selector-rows-map) %))))
 
-(defn page->records [page selectors]
-  "Extracts rows of records from page (html dom map) based on selectors map"
-  (let [extract (partial extract-from-page page)
-        named-select (fn [result [key selector]]
-                       (assoc result key (extract selector)))
-        selector-data (reduce named-select {} selectors)]
-    (map-columns-to-record-rows selector-data)))
+(defn named-columns-from-snippet [selectors snippet]
+  (map (fn [[key [selector processor]]]
+         [key (extract-from-snippet snippet selector processor)]) selectors))
+
+(defn to-mapza [result [key value]] (assoc result key value))
+
+(defn extract-record [selectors snippet]
+  "Extracts data into a map from a snippet according to selectors"
+  (let [snippet-extractor (partial named-columns-from-snippet selectors)]
+    (reduce to-mapza {} (snippet-extractor snippet))))
+
+(defn get-text [nodes] (apply str (map sanitize (map html/text nodes))))
+(defn get-int [[node & others]] ((comp #(Integer. %) #(re-find #"\d+" %) get-text) [node]))
+(defn get-link [[node & others]] (first (html/attr-values node :href)))
 
 (def listing-selectors
-  {:title [:tr.object-type-apartment :td.object-name :h2.object-title]
-   :description [:tr.object-type-apartment :td.object-name :p.object-excerpt]})
+  {:title [[:td.object-name :h2.object-title] get-text]
+   :short-desc [[:td.object-name :p.object-excerpt] get-text]
+   :link [[:td.object-name :h2.object-title :a] get-link]
+   :rooms [[:td.object-rooms] get-int]
+   :area [[:td.object-m2] get-int]
+   :price [[:td :p.object-price-value] get-int]})
 
+(defn kv-search->records [page]
+  "Maps kv.ee search page to list of records based on selectors"
+  (let [ad-row-selector [:tr.object-type-apartment]
+        rows (html/select page ad-row-selector)
+        kv-ad-extractor (partial extract-record listing-selectors)
+        not-nil-rows (filter #((complement nil?) (html/attr-values % :id)) rows)]
+    (map kv-ad-extractor not-nil-rows)))

@@ -19,3 +19,6 @@
         timestamps {:created_at now :updated_at now}
         db-property (snakeify-map-keys property)]
     (sql/insert! db "properties" (merge db-property timestamps))))
+
+(defn get-properties []
+  (sql/query db ["SELECT * FROM properties"]))

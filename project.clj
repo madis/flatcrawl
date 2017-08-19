@@ -16,7 +16,9 @@
                  [ring/ring-jetty-adapter "1.6.2"]
                  [compojure "1.6.0"]
                  [hiccup "1.0.5"]
-                 [ring/ring-defaults "0.3.1"]]
+                 [ring/ring-defaults "0.3.1"]
+                 [org.clojure/core.async "0.3.443"]
+                 [ring "1.6.2"]]
 
   :main ^:skip-aot flatcrawl.core
   :target-path "target/%s"

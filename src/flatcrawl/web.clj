@@ -5,7 +5,9 @@
             [ring.middleware.reload :refer [wrap-reload]]
             [hiccup.page :as page]
             [flatcrawl.db :as db]
-            [ring.middleware.defaults :refer :all]))
+            [ring.middleware.defaults :refer :all]
+            [flatcrawl.services :refer (->Service)])
+  (:import [flatcrawl.services Service]))
 
 (defn summary-presenter []
   (let [properties (db/get-properties)
@@ -40,5 +42,24 @@
 
 (def app (wrap-defaults (wrap-reload #'routes) site-defaults))
 
-(defn -main []
-  (ring/run-jetty app {:port 8080 :join? false}))
+(def ^:dynamic *server* nil)
+
+(defn swap-server [new-server] (def ^:dynamic *server* new-server))
+
+(defn start []
+  (if (nil? *server*)
+    (do (println "Starting web")
+        (swap-server (ring/run-jetty app {:port 8080 :join? false}))
+        (println "Web started"))
+    *server*))
+
+(defn stop [] (if *server*
+                (do (println "Stopping web server")
+                    (.stop *server*)
+                    (println "Web server stopped"))))
+
+(defn status [] (if *server* :running :stopped))
+
+(defn get-service [] (->Service "web" start stop status))
+
+(defn -main [] "Starts web server and waits" (start))

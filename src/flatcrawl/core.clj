@@ -1,15 +1,15 @@
 (ns flatcrawl.core
   (:gen-class)
-  (:require [flatcrawl.import :as import]
-            [flatcrawl.db :as db]))
+  (:require [flatcrawl.crawler :as crawler]
+            [flatcrawl.web :as web]))
 
-(defn crawl-and-update []
-  (let [results (import/kv-search->records (import/search-kv-ee))]
-    (doseq [property results] (db/add-property property))))
+(def ^:dynamic *services* [(web/get-service) (crawler/get-service)])
 
 (defn -main
-  "I don't do a whole lot ... yet."
+  "Starts services in the background and then waits forever"
   [& args]
-  (println "Crawling kv.ee")
-  (crawl-and-update))
+  (println "Starting flatcrawl")
+  (doseq [service *services*] (.start service))
+  (println "Services started. Will wait forever")
+  (repeatedly #(Thread/sleep 1000)))
 

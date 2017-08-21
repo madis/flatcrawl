@@ -18,9 +18,14 @@
   (let [number-node (take 1 (html/select simple-html [:span.number]))]
     (is (= 11 (get-int number-node)))))
 
+(deftest attr-getter-test
+  (let [snippet (first (html/select simple-html [:li]))]
+   (is (= "123" (attr-getter :id snippet)))))
+
 (deftest kv-ee-ad-parsing-test
   (testing "Extracing correct data from real page"
-    (let [flat-ad {:title "1. Harjumaa, Tallinn, Kristiine, Sõpruse pst 29"
+    (let [flat-ad {:external-id 2949473
+                   :title "1. Harjumaa, Tallinn, Kristiine, Sõpruse pst 29"
                    :short-desc "Korrus 2/5, korteriomand, kivimaja, ehitatud 2008, valmis, elektripliit, dušš, rõdu , ...Kesklinna vahetus läheduses, Kristiine linnaosas üürile anda möbleeritud 2-toaline ..."
                    :link "http://kinnisvaraportaal-kv-ee.postimees.ee/kesklinna-vahetus-laheduses-kristiine-linnaosas-uu-2949473.html?nr=1&search_key=aff35c03ce26f180ec6cea6413be800f"
                    :rooms 2

@@ -70,6 +70,10 @@
        (map #(zipmap (keys selector-rows-map) %))))
 
 (defn named-columns-from-snippet [selectors snippet]
+  "Takes a map with selectors & processor as values and a snippet.
+  Returns matches as values. E.g.
+    {:title [[:td.title], get-text]} :body [[:td.body], get-text]} ->
+      {:title \"I am title\" :body \"I am body\""
   (map (fn [[key [selector processor]]]
          [key (extract-from-snippet snippet selector processor)]) selectors))
 
@@ -80,12 +84,17 @@
   (let [snippet-extractor (partial named-columns-from-snippet selectors)]
     (reduce to-mapza {} (snippet-extractor snippet))))
 
+(defn attr-getter [attr-name node & others]
+  (first (html/attr-values node attr-name)))
+
 (defn get-text [nodes] (apply str (map sanitize (map html/text nodes))))
 (defn get-int [[node & others]] ((comp #(Integer. %) #(re-find #"\d+" %) get-text) [node]))
 (defn get-link [[node & others]] (first (html/attr-values node :href)))
+(defn get-id [node & others] (Integer. (attr-getter :id (first node))))
 
 (def listing-selectors
-  {:title [[:td.object-name :h2.object-title] get-text]
+  {:external-id [[:tr] get-id]
+   :title [[:td.object-name :h2.object-title] get-text]
    :short-desc [[:td.object-name :p.object-excerpt] get-text]
    :link [[:td.object-name :h2.object-title :a] get-link]
    :rooms [[:td.object-rooms] get-int]

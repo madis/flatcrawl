@@ -22,3 +22,11 @@
 
 (defn get-properties []
   (sql/query db ["SELECT * FROM properties"]))
+
+(defn find-by-external-id [id]
+  (sql/query db ["SELECT * FROM properties WHERE external_id = ?" id]))
+
+(defn update-property [property]
+  (let [db-property (snakeify-map-keys property)
+        external-id (:external-id property)]
+    (sql/update! db :properties db-property ["external_id = ?" external-id])))

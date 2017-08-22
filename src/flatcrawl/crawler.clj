@@ -5,9 +5,15 @@
             [flatcrawl.services :refer (->Service)]
             [clojure.core.async :as async :refer [thread]]))
 
+(defn exist-in-db? [property]
+  (not-empty (db/find-by-external-id (:external-id property))))
+
 (defn crawl-and-update []
   (let [results (import/kv-search->records (import/search-kv-ee))]
-    (doseq [property results] (db/add-property property))))
+    (doseq [property results]
+      (if (exist-in-db? property)
+        (db/update-property property)
+        (db/add-property property)))))
 
 (def ^:dynamic *crawler-channel* nil)
 (def ^:dynamic *crawler-stop* false)

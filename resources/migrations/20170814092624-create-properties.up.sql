@@ -6,5 +6,6 @@ CREATE TABLE properties(
   rooms integer,
   area float,
   price float,
+  external_id integer,
   created_at timestamp without time zone NOT NULL,
   updated_at timestamp without time zone NOT NULL);
